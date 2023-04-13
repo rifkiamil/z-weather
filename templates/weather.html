@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Weather</title>
+  </head>
+  <body>
+    <h1>Weather</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>City</th>
+          <th>Temperature</th>
+          <th>Humidity</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for data in weather_data %}
+          <tr>
+            <td>{{ data['name'] }}</td>
+            <td>{{ data['main']['temp'] }} &deg;F</td>
+            <td>{{ data['main']['humidity'] }}%</td>
+            <td>{{ data['weather'][0]['description'] }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

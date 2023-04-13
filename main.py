@@ -1,20 +1,27 @@
 import json
 import requests
-from flask import Flask, request, abort
+from flask import Flask, request, abort, render_template
 
 app = Flask(__name__)
+
+app.config['url_prefix'] = 'http://127.0.0.1:5000'
+app.config['EXPLAIN_TEMPLATE_LOADING'] = True
+app.config['DEBUG'] = True
+
+
 
 @app.route('/', methods=['GET'])
 def index():
     return 'Hello, World!'
 
-@app.route('/test', methods=['GET'])
+@app.route('/test/', methods=['GET'])
 def test():
     current_url = request.url
-    return f'Hello Test The current URL is: {current_url}'
+    return render_template('index.html', current_url=current_url)
 
 @app.route('/api/weather', methods=['GET'])
 def weather():
+    app.logger.info('/api/weather')
     if request.method != 'GET':
         abort(405) # Method Not Allowed
     with open('key.json') as f:
@@ -30,7 +37,7 @@ def weather():
     geocoding_params = {'q': city, 'limit': '', 'appid': api_key}
     geocoding_response = requests.get(geocoding_url, params=geocoding_params)
     if geocoding_response.status_code != 200:
-        return 'An error occurred while fetching the geocoding data.'
+        return {'error': 'An error occurred while fetching the geocoding data.'}
     geo_data = geocoding_response.json()[0]
     lat = geo_data['lat']
     lon = geo_data['lon']
@@ -44,17 +51,31 @@ def weather():
 
     if weather_response.status_code == 200:
         weather_data = weather_response.json()
-        table_html = '<table>'
-        for key, value in weather_data.items():
-            if isinstance(value, dict):
-                for subkey, subvalue in value.items():
-                    table_html += f'<tr><td>{key}.{subkey}</td><td>{subvalue}</td></tr>'
-            else:
-                table_html += f'<tr><td>{key}</td><td>{value}</td></tr>'
-        table_html += '</table>'
-        return table_html
+        return weather_data
     else:
-        return 'An error occurred while fetching the weather data.'
+        return {'error': 'An error occurred while fetching the weather data.'}
+
+
+@app.route('/weather')
+def weather_page():
+    cities = ['New York City', 'London', 'Paris']
+    weather_data = []
+    for city in cities:
+        api_url = f"{app.config['url_prefix']}/api/weather?search={city}"
+        response = requests.get(api_url)
+
+        if response.status_code == 200:
+            data = response.json()
+            weather_data.append(data)
+        else:
+            app.logger.error(f"Error fetching weather data for {city}: {response.status_code}")
+    return render_template('weather.html', weather_data=weather_data)
+
+@app.route('/weather/<city>')
+def city_weather(city):
+    api_url = f'/api/weather?search={city}'
+    weather_data = requests.get(api_url).text
+    return render_template('weather.html', weather_data=weather_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
