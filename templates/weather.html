@@ -20,6 +20,8 @@
             <td>{{ data['name'] }}</td>
             <td>{{ data['main']['temp'] }} &deg;F</td>
             <td>{{ data['main']['humidity'] }}%</td>
+             <!-- The 'weather' list contains a single item that represents the current weather for the city. 
+            To access the 'description' key of this item, we need to use the index 0 to refer to the first (and only) element in the list. -->
             <td>{{ data['weather'][0]['description'] }}</td>
           </tr>
         {% endfor %}
